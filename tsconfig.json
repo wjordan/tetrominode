@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitAny": false,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "target": "ES5"
+  },
+  "filesGlob": [
+    "./**/*.ts",
+    "!./node_modules/**/*.ts"
+  ],
+  "files": [
+    "./index.ts",
+    "./typings/node/node.d.ts",
+    "./typings/tsd.d.ts",
+    "./typings/blessed.d.ts",
+    "./node_modules/immutable/dist/immutable.d.ts"
+  ]
+}
