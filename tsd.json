@@ -10,6 +10,9 @@
     },
     "lodash/lodash.d.ts": {
       "commit": "98d3168c2c570352a3a7393788e2ec9fbb08ade6"
+    },
+    "gl-matrix/gl-matrix.d.ts": {
+      "commit": "3191f6e0088eee07c4d8fd24e4d27a40a60d9eb9"
     }
   }
 }

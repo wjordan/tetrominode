@@ -1,92 +1,124 @@
 #!/usr/bin/env node
 import Immutable = require('immutable');
+var Set = Immutable.Set;
+type Set<T> = Immutable.Set<T>;
+var List = Immutable.List;
+type List<T> = Immutable.List<T>;
+import gl = require('gl-matrix');
+import _ = require('lodash');
 
 class Point {
   constructor(public x: number, public y: number) {}
-  static from(x: Point|number, y?: number) {
-    return (x instanceof Point) ? [x.x, x.y] : [<number>x, y];
+  create(x: number, y: number) { return new (<any>this).constructor(x, y); }
+
+  toString() { return `[${this.x}, ${this.y}]`;}
+  equals(other) { return this.x == other.x && this.y == other.y; }
+  hashCode() { return this.x * 31 + this.y; }
+
+  toArray() { return [this.x, this.y]; }
+  toList() { return List(this.toArray()); }
+  static fromArray(xy: number[]) { return new this(xy[0],xy[1]); }
+  fromArray(xy: number[]) { return this.create(xy[0], xy[1]); }
+  static fromList(p: List<number>) { return this.fromArray(p.toArray()); }
+  fromList(p: List<number>) { return this.fromArray(p.toArray()); }
+
+  // Applies a function to x and y components separately.
+  xy(f: (i: number) => any) {
+    return Set.of(0, 1).map(i => this.fromList(this.toList().update(i, val => f(val))));
   }
-  scale(scale: number) {
-    return new Point(this.x * scale, this.y * scale);
+
+  subtract(p: Point) { return this.create(this.x - p.x, this.y - p.y); }
+  scale(x: number, y: number) { return this.create(this.x * x, this.y * y); }
+
+  // Rotate a point x degrees around the origin.
+  rotate(degrees: number) {
+    const vec = gl.vec2.fromValues(this.x, this.y);
+    const mat = gl.mat2.create();
+    gl.mat2.rotate(mat, mat, gl.glMatrix.toRadian(degrees));
+    gl.vec2.transformMat2(vec, vec, mat);
+    return new (<any>this).constructor(vec[0], vec[1]);
   }
-  add(x: Point|number, y?: number) {
-    [x,y] = Point.from(x,y);
-    return new Point(this.x + <number>x, this.y + y);
+}
+
+class PointInt extends Point {
+  constructor(x: number, y: number) {
+    super(x|0,y|0);
   }
-  subtract(x: Point|number, y?: number) {
-    [x,y] = Point.from(x,y);
-    return new Point(this.x - <number>x, this.y - y);
+  steps():Set<PointInt> {
+    return Set.of(1, -1).flatMap(z => this.xy(p => p + z)).toSet();
   }
-  equals(other) {
-    return this.x == other.x && this.y == other.y;
-  }
-  toString() { return `{x: ${this.x}, y: ${this.y}}`;}
 }
 
 class Polyomino {
-  public points: Immutable.Set<Point>;
-  normalize() {
-    const minX = this.points.map(point => point.x).min();
-    const minY = this.points.map(point => point.y).min();
-    this.points = Immutable.Set(this.points.map(point => point.subtract(minX, minY)));
+  public points: Set<PointInt>;
+  constructor(points: Set<PointInt>) {
+    // Translate a fixed polyomino into canonical form.
+    // One or more cells with x=0, one or more with y=0, no negative indices.
+    var min:PointInt = new PointInt(points.minBy(p => p.x).x, points.minBy(p => p.y).y);
+    this.points = points.map(p => p.subtract(min)).toSet();
+    // For classes of polyominoes with symmetries, canonical form is the sorted-first element.
+    const symmetries = this.symmetries();
+    this.points = symmetries.sort().first().points;
   }
-  static fromPoints(...points:number[][]) {
-    const pointObjects = points.map(point => new Point(point[0], point[1]));
-    return new Polyomino(Immutable.Set(pointObjects));
+
+  equals(other) { return this.points.equals(other.points); }
+  hashCode() { return this.points.hashCode(); }
+  toString() { return `{${this.points.sort().map(p => p.toString()).join(', ')}}`; }
+
+  private static MONO = Set.of(new Polyomino(Set.of(new PointInt(0,0))));
+  static get(order: number) {
+    return order == 1 ? this.MONO : this.grow(this.get(order - 1));
   }
-  static from(...points:Point[]) {
-    return new Polyomino(Immutable.Set(points));
+
+  // Grow a new higher-order polyomino set by adding an extra cell.
+  private static grow(polyominoes: Set<Polyomino>): Set<Polyomino> {
+    return Set<Polyomino>(polyominoes.flatMap(poly =>
+      poly.points.flatMap(point =>
+        point.steps().filterNot(p =>
+          poly.points.includes(p)
+        ).map(point =>
+          new this(poly.points.add(point))
+    ))));
   }
-  constructor(points: Immutable.Set<Point>) {
-    this.points = points;
-    this.normalize();
+
+  symmetries(): Set<Polyomino> {
+    return Set.of(this);
   }
-  equals(other: Polyomino) {
-    this.normalize();
-    other.normalize();
-    return this.points.equals(other.points);
+
+  rotateRight(): Polyomino {
+    return new Polyomino(this.points.map(p => new PointInt(p.y, -p.x)).toSet());
   }
-  toString() { return `Polyomino: ${this.points}`; }
+
+  rotations(): Set<Polyomino> {
+    return Immutable.Range(1, 4).reduce(r => {
+      return r.add(r.last().rotateRight());
+    }, Set.of(this));
+  }
+
+  reflections(): Set<Polyomino> {
+    return List.of(1, -1).flatMap(i => List.of(1, -1).map(j =>
+        new Polyomino(this.points.map(point => point.scale(i, j)).toSet())
+    )).toSet();
+  }
 }
 
-// Single step in all four cardinal directions from the provided point.
-function cardinalSteps(point: Point): Point[] {
-  return [1, -1].map(z => point.x + z).map(x => new Point(x, point.y)).concat(
-    [1, -1].map(z => point.y + z).map(y => new Point(point.x, y)));
-}
-
-const monomino = Immutable.Set([Polyomino.fromPoints([0,0])]);
-function getPolyominoes(order: number) {
-  if(order == 1) {
-    return monomino;
+class OneSidedPolyomino extends Polyomino {
+  symmetries() {
+    return this.rotations();
   }
-  return createPolyominoes(getPolyominoes(order-1));
 }
 
-function createPolyominoes(polyominoes: Immutable.SetIterable<Polyomino>): Immutable.SetIterable<Polyomino> {
-  var polyominoSet = <Immutable.SetIterable<Polyomino>>polyominoes.flatMap(polyomino => {
-    return polyomino.points.flatMap(point => {
-      return cardinalSteps(point).map(point => {
-        return new Polyomino(polyomino.points.add(point)));
-      }
-    });
-  });
-  polyominoSet = polyominoSet.filter(poly => poly.points.size == polyominoes.first().points.size + 1);
-  // If Immutable.Set removed duplicates correctly, this extra step shouldn't be necessary.
-  var finalSet = Immutable.Set([]);
-  polyominoSet.forEach(p => {
-    if(!finalSet.contains(p)) {
-      finalSet = finalSet.add(p);
-    }
-  });
-  return finalSet;
+class FreePolyomino extends Polyomino {
+  symmetries() {
+    return this.reflections().flatMap(poly => poly.rotations()).toSet();
+  }
 }
 
-[
-  'mon',
-  'd',
-  'tr',
-  'tetr',
-  'pent',
-  'hex'
-].map((x, index) => console.log(`there are ${getPolyominoes(index+1).size} fixed ${x}ominoes.`));
+const fixedTetrominoes = Polyomino.get(4);
+console.log(`there are ${fixedTetrominoes.size} fixed tetrominoes:\n${fixedTetrominoes.map(p => p.toString()).join("\n")}`);
+
+const freeTetrominoes = FreePolyomino.get(4);
+console.log(`there are ${freeTetrominoes.size} free tetrominoes:\n${freeTetrominoes.map(p => p.toString()).join("\n")}`);
+//
+const oneSidedTetrominoes = OneSidedPolyomino.get(4);
+console.log(`there are ${oneSidedTetrominoes.size} one-sided tetrominoes:\n${oneSidedTetrominoes.map(p => p.toString()).join("\n")}`);
