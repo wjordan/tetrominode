@@ -19,6 +19,7 @@ declare module Blessed {
     append(BlessedElement): void
     remove(BlessedElement): void
     enableKeys(): void;
+    key(key: string[], listener:(ch:string, key:string) => void);
   }
 
   export interface BlessedKeyListenerKey {
@@ -41,6 +42,7 @@ declare module Blessed {
     normalBuffer(): void;
     alternateBuffer(): void;
     exit(code:number): void;
+    write(text:string): void;
   }
 }
 
