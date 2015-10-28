@@ -7,9 +7,9 @@ type List<T> = Immutable.List<T>;
 import gl = require('gl-matrix');
 import _ = require('lodash');
 
-class Point {
+class Point<T extends Point<any>> {
   constructor(public x: number, public y: number) {}
-  create(x: number, y: number) { return new (<any>this).constructor(x, y); }
+  create(x: number, y: number):T { return new (<any>this).constructor(x, y); }
 
   toString() { return `[${this.x}, ${this.y}]`;}
   equals(other) { return this.x == other.x && this.y == other.y; }
@@ -18,34 +18,33 @@ class Point {
   toArray() { return [this.x, this.y]; }
   toList() { return List(this.toArray()); }
   static fromArray(xy: number[]) { return new this(xy[0],xy[1]); }
-  fromArray(xy: number[]) { return this.create(xy[0], xy[1]); }
+  fromArray(xy: number[]):T { return this.create(xy[0], xy[1]); }
   static fromList(p: List<number>) { return this.fromArray(p.toArray()); }
-  fromList(p: List<number>) { return this.fromArray(p.toArray()); }
+  update(index: number, updater: (value: number) => number): T {
+    return this.fromList(this.toList().update(index, val => updater(val)));
+  }
+  fromList(p: Immutable.Iterable<number, number>):T { return this.fromArray(p.toArray()); }
 
-  // Applies a function to x and y components separately.
-  xy(f: (i: number) => any) {
-    return Set.of(0, 1).map(i => this.fromList(this.toList().update(i, val => f(val))));
+  // Apply a unary operation to x and y separately, returning a List of the resulting objects.
+  xy(f: (i: number) => number):List<T> {
+    return Set.of(0, 1).map(i => this.update(i, val => f(val))).toList();
   }
 
-  subtract(p: Point) { return this.create(this.x - p.x, this.y - p.y); }
-  scale(x: number, y: number) { return this.create(this.x * x, this.y * y); }
-
-  // Rotate a point x degrees around the origin.
-  rotate(degrees: number) {
-    const vec = gl.vec2.fromValues(this.x, this.y);
-    const mat = gl.mat2.create();
-    gl.mat2.rotate(mat, mat, gl.glMatrix.toRadian(degrees));
-    gl.vec2.transformMat2(vec, vec, mat);
-    return new (<any>this).constructor(vec[0], vec[1]);
+  // Apply a binary operation with another Point.
+  apply(other:T, f: (a:number, b:number) => number):T {
+    return this.create(f(this.x, other.x), f(this.y, other.y));
   }
+
+  subtract(p: T) { return this.apply(p, (a, b) => a - b); }
+  scale(p: T) { return this.apply(p, (a, b) => a * b); }
 }
 
-class PointInt extends Point {
+class PointInt extends Point<PointInt> {
   constructor(x: number, y: number) {
     super(x|0,y|0);
   }
   steps():Set<PointInt> {
-    return Set.of(1, -1).flatMap(z => this.xy(p => p + z)).toSet();
+    return Set.of(1, -1).flatMap(z => this.xy(x => x + z)).toSet();
   }
 }
 
@@ -56,13 +55,14 @@ class Polyomino {
     // One or more cells with x=0, one or more with y=0, no negative indices.
     var min:PointInt = new PointInt(points.minBy(p => p.x).x, points.minBy(p => p.y).y);
     this.points = points.map(p => p.subtract(min)).toSet();
-    // For classes of polyominoes with symmetries, canonical form is the sorted-first element.
+    // For subclasses of polyominoes with symmetries, canonical form is the sorted-first element.
     const symmetries = this.symmetries();
     this.points = symmetries.sort().first().points;
   }
 
   equals(other) { return this.points.equals(other.points); }
   hashCode() { return this.points.hashCode(); }
+
   toString() { return `{${this.points.sort().map(p => p.toString()).join(', ')}}`; }
 
   private static MONO = Set.of(new Polyomino(Set.of(new PointInt(0,0))));
@@ -81,12 +81,16 @@ class Polyomino {
     ))));
   }
 
+  transform(f: (point:PointInt) => PointInt): Polyomino {
+    return new Polyomino(this.points.map(f).toSet());
+  }
+
   symmetries(): Set<Polyomino> {
     return Set.of(this);
   }
 
   rotateRight(): Polyomino {
-    return new Polyomino(this.points.map(p => new PointInt(p.y, -p.x)).toSet());
+    return this.transform(p => new PointInt(p.y, -p.x));
   }
 
   rotations(): Set<Polyomino> {
@@ -97,7 +101,7 @@ class Polyomino {
 
   reflections(): Set<Polyomino> {
     return List.of(1, -1).flatMap(i => List.of(1, -1).map(j =>
-        new Polyomino(this.points.map(point => point.scale(i, j)).toSet())
+        this.transform(point => point.scale(new PointInt(i, j)))
     )).toSet();
   }
 }
