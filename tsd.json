@@ -13,6 +13,15 @@
     },
     "gl-matrix/gl-matrix.d.ts": {
       "commit": "3191f6e0088eee07c4d8fd24e4d27a40a60d9eb9"
+    },
+    "mocha/mocha.d.ts": {
+      "commit": "c0d876601e0f8236fd6b57626eb62c4e485f1563"
+    },
+    "assertion-error/assertion-error.d.ts": {
+      "commit": "c0d876601e0f8236fd6b57626eb62c4e485f1563"
+    },
+    "chai/chai.d.ts": {
+      "commit": "c0d876601e0f8236fd6b57626eb62c4e485f1563"
     }
   }
 }

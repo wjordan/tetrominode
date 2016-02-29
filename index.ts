@@ -48,7 +48,7 @@ class PointInt extends Point<PointInt> {
   }
 }
 
-class Polyomino {
+export class Polyomino {
   public points: Set<PointInt>;
   constructor(points: Set<PointInt>) {
     // Translate a fixed polyomino into canonical form.
@@ -62,7 +62,6 @@ class Polyomino {
 
   equals(other) { return this.points.equals(other.points); }
   hashCode() { return this.points.hashCode(); }
-
   toString() { return `{${this.points.sort().map(p => p.toString()).join(', ')}}`; }
 
   private static MONO = Set.of(new Polyomino(Set.of(new PointInt(0,0))));
@@ -96,7 +95,7 @@ class Polyomino {
   rotations(): Set<Polyomino> {
     return Immutable.Range(1, 4).reduce(r => {
       return r.add(r.last().rotateRight());
-    }, Set.of(this));
+    }, Set.of(<Polyomino>this));
   }
 
   reflections(): Set<Polyomino> {
@@ -106,23 +105,14 @@ class Polyomino {
   }
 }
 
-class OneSidedPolyomino extends Polyomino {
+export class OneSidedPolyomino extends Polyomino {
   symmetries() {
     return this.rotations();
   }
 }
 
-class FreePolyomino extends Polyomino {
+export class FreePolyomino extends Polyomino {
   symmetries() {
     return this.reflections().flatMap(poly => poly.rotations()).toSet();
   }
 }
-
-const fixedTetrominoes = Polyomino.get(4);
-console.log(`there are ${fixedTetrominoes.size} fixed tetrominoes:\n${fixedTetrominoes.map(p => p.toString()).join("\n")}`);
-
-const freeTetrominoes = FreePolyomino.get(4);
-console.log(`there are ${freeTetrominoes.size} free tetrominoes:\n${freeTetrominoes.map(p => p.toString()).join("\n")}`);
-//
-const oneSidedTetrominoes = OneSidedPolyomino.get(4);
-console.log(`there are ${oneSidedTetrominoes.size} one-sided tetrominoes:\n${oneSidedTetrominoes.map(p => p.toString()).join("\n")}`);

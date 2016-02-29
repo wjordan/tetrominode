@@ -6,20 +6,23 @@
   "main": "index.ts",
   "scripts": {
     "start": "./index.ts",
-    "test": "tsc && ./index.js"
+    "pretest": "tsc",
+    "test": "mocha"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
     "blessed": "^0.1.81",
     "browserify": "^11.2.0",
+    "chai": "^3.5.0",
     "gl-matrix": "^2.3.1",
     "intern": "^3.0.6",
     "lodash": "^3.10.1",
+    "mocha": "^2.4.5",
     "tsify": "^0.12.2",
     "typescript": "^1.6.2"
   },
   "dependencies": {
-    "immutable": "^3.7.5"
+    "immutable": "*"
   }
 }
