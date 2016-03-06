@@ -1,5 +1,7 @@
-import { Polyomino, FreePolyomino, OneSidedPolyomino } from '../index';
 import { expect } from 'chai';
+import {Polyomino} from "../src/Polyomino";
+import {FreePolyomino} from "../src/FreePolyomino";
+import {OneSidedPolyomino} from "../src/OneSidedPolyomino";
 
 describe('Polyomino', () => {
   describe('Enumerate polyominoes', () => {

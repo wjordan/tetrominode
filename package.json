@@ -5,9 +5,10 @@
   "repository": "wjordan/tetrominode",
   "main": "index.ts",
   "scripts": {
-    "prestart": "tsc",
+    "tsconfig": "tsconfig && tsc",
+    "prestart": "npm run tsconfig",
     "start": "./test.js",
-    "pretest": "tsc",
+    "pretest": "npm run tsconfig",
     "test": "mocha"
   },
   "author": "",
@@ -20,6 +21,8 @@
     "intern": "^3.0.6",
     "lodash": "^3.10.1",
     "mocha": "^2.4.5",
+    "tsconfig": "^2.2.0",
+    "tsconfig-glob": "^0.4.1",
     "tsify": "^0.12.2",
     "typescript": "^1.6.2"
   },
