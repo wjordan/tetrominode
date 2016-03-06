@@ -7,7 +7,7 @@ type List<T> = Immutable.List<T>;
 import gl = require('gl-matrix');
 import _ = require('lodash');
 
-class Point<T extends Point<any>> {
+export class Point<T extends Point<any>> {
   constructor(public x: number, public y: number) {}
   create(x: number, y: number):T { return new (<any>this).constructor(x, y); }
 
@@ -35,13 +35,21 @@ class Point<T extends Point<any>> {
     return this.create(f(this.x, other.x), f(this.y, other.y));
   }
 
+  add(p: T) { return this.apply(p, (a, b) => a + b); }
   subtract(p: T) { return this.apply(p, (a, b) => a - b); }
   scale(p: T) { return this.apply(p, (a, b) => a * b); }
 }
 
-class PointInt extends Point<PointInt> {
+export class PointInt extends Point<PointInt> {
   constructor(x: number, y: number) {
     super(x|0,y|0);
+  }
+  range():Set<PointInt> {
+    return Set<PointInt>(Immutable.Range(0, this.x).flatMap(x =>
+      Immutable.Range(0, this.y).map(y =>
+        new PointInt(x, y)
+      )
+    ));
   }
   steps():Set<PointInt> {
     return Set.of(1, -1).flatMap(z => this.xy(x => x + z)).toSet();
@@ -65,7 +73,7 @@ export class Polyomino {
   toString() { return `{${this.points.sort().map(p => p.toString()).join(', ')}}`; }
 
   private static MONO = Set.of(new Polyomino(Set.of(new PointInt(0,0))));
-  static get(order: number) {
+  static get(order: number): Set<Polyomino> {
     return order == 1 ? this.MONO : this.grow(this.get(order - 1));
   }
 

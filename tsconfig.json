@@ -12,8 +12,11 @@
     "!./node_modules/**/*.ts"
   ],
   "files": [
+    "./test/RandomizerTest.ts",
     "./test/PolyominoTest.ts",
+    "./src/Randomizer.ts",
     "./index.ts",
+    "./test.ts",
     "./typings/node/node.d.ts",
     "./typings/tsd.d.ts",
     "./typings/blessed.d.ts",

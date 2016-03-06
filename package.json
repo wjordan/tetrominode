@@ -5,7 +5,8 @@
   "repository": "wjordan/tetrominode",
   "main": "index.ts",
   "scripts": {
-    "start": "./index.ts",
+    "prestart": "tsc",
+    "start": "./test.js",
     "pretest": "tsc",
     "test": "mocha"
   },
@@ -23,6 +24,7 @@
     "typescript": "^1.6.2"
   },
   "dependencies": {
-    "immutable": "*"
+    "immutable": "*",
+    "random-js": "^1.0.8"
   }
 }

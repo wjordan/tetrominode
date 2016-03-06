@@ -6,6 +6,7 @@ declare module Blessed {
     box(options?:Object): BlessedBox
     screen(options?:Object): BlessedScreen
     program(): BlessedProgram
+    escape(string: string): string;
   }
 
   export interface BlessedElement {

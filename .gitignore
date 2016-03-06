@@ -38,3 +38,4 @@ node_modules
 
 typings/*
 !typings/blessed.d.ts
+!typings/random-js
