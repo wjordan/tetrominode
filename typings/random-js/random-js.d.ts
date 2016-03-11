@@ -15,7 +15,7 @@ interface MT19937 extends Engine{
     getUseCount(): Engine;
 }
 
-declare module 'random-js' {
+declare module "random-js" {
 
     export = class Random {
         constructor (engine?: Engine);

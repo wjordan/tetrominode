@@ -25,6 +25,9 @@
     },
     "random-js/random-js.d.ts": {
       "commit": "9f0f926a12026287b5a4a229e5672c01e7549313"
+    },
+    "tinycolor/tinycolor.d.ts": {
+      "commit": "8b3b453a104bb2a949580bbb4e8c81c2a10138b3"
     }
   }
 }

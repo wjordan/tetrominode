@@ -1,58 +1,54 @@
-import BlessedBox = Blessed.BlessedBox;
 import {PointInt} from "./PointInt";
 import {Polyomino} from "./Polyomino";
 import {Block} from "./Block";
+import {Playfield} from "./Playfield";
+import {emptyPolyomino} from "./EmptyPolyomino";
+// noinspection ES6UnusedImports,TsLint
+import * as Immutable from "immutable";
+import List = Immutable.List;
+import Iterable = Immutable.Iterable;
 
 /**
  * A single polyomino piece in a fixed position/rotation.
  * Contains a set of Blocks.
  */
 export class Piece {
-  public canvas: Immutable.Map<PointInt, BlessedBox>;
-  public shape:Polyomino;
-  public position:PointInt;
-  public blocks:Immutable.List<Block>;
+  static EMPTY:Piece = new Piece();
 
-  constructor(shape: Polyomino, canvas, playfield) {
+  position: PointInt = PointInt.ZERO;
+  blocks: List<Block>;
+  shape:Polyomino;
+
+  constructor(
+    shapeTuple: [number, Polyomino] = [0, emptyPolyomino],
+    playfield?:Playfield
+  ) {
+    const [shapeIndex, shape] = shapeTuple;
     this.shape = shape;
-    this.position = new PointInt(0, 0);
-    this.canvas = canvas;
-    this.blocks = this.shape.points.toList().map((point, index) => new Block(point.add(this.position), index.toString(), playfield)).toList();
+    this.blocks = this.shape.points.toList().map((point, index) => new Block(point.add(this.position), shapeIndex, index, playfield)).toList();
     this.updateBlocks();
-    this.draw(true);
   }
 
-  updateBlocks() {
+  updateBlocks():void {
     this.blocks.forEach((block, index) => block.position = this.shape.points.toList().get(index).add(this.position));
   }
 
-  points() { return this.blocks.map(block => block.position); }
-  transition(func) {
-    this.up();
+  points():Iterable<number, PointInt> { return this.blocks.map(block => block.position); }
+  transition(func:() => any):void {
     func();
     this.updateBlocks();
-    this.down();
   }
 
-  move(x: number, y: number) {
-    this.transition(_ => this.position = this.position.add(new PointInt(x, y)));
+  move(x: number, y: number):void {
+    this.transition(() => this.position = this.position.add(new PointInt(x, y)));
   }
-  rotate() {
-    this.transition(_ => this.shape = this.shape.rotateRight());
+  rotate():void {
+    this.transition(() => this.shape = this.shape.rotateRight());
   }
-  checkRotate() {
+  checkRotate():Polyomino {
     return this.shape.rotateRight();
   }
-
-  up() { this.draw(false); }
-  down() { this.draw(true); }
-  draw(fill:boolean) {
-    this.points().forEach((point, index) => {
-      const box:BlessedBox = this.canvas.get(point);
-      if(box) {
-        const str = this.blocks.get(index).type.toString();
-        box.content = fill ? `${str}${str}` : ' .';
-      }
-    });
+  draw():void {
+    this.blocks.forEach(block => block.cell.draw());
   }
 }

@@ -5,7 +5,7 @@
         "noImplicitAny": false,
         "removeComments": true,
         "preserveConstEnums": true,
-        "sourceMap": true,
+        "sourceMap": false,
         "target": "ES5"
     },
     "filesGlob": [
@@ -24,20 +24,27 @@
         "./typings/mocha/mocha.d.ts",
         "./typings/node/node.d.ts",
         "./typings/random-js/random-js.d.ts",
+        "./typings/tinycolor/tinycolor.d.ts",
         "./references.ts",
         "./src/Block.ts",
         "./src/Cell.ts",
+        "./src/EmptyPolyomino.ts",
         "./src/FreePolyomino.ts",
         "./src/OneSidedPolyomino.ts",
         "./src/Piece.ts",
         "./src/Playfield.ts",
+        "./src/PlayMode.ts",
         "./src/Point.ts",
         "./src/PointInt.ts",
         "./src/Polyomino.ts",
+        "./src/PolyPiece.ts",
         "./src/Randomizer.ts",
         "./test.ts",
         "./test/PointTest.ts",
         "./test/PolyominoTest.ts",
         "./test/RandomizerTest.ts"
-    ]
+    ],
+    "atom": {
+        "rewriteTsconfig": true
+    }
 }

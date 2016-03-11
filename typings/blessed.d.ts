@@ -4,6 +4,8 @@ declare module Blessed {
 
     // Methods
     box(options?:Object): BlessedBox
+    image(options?:Object): BlessedImage
+    log(options?:Object): BlessedLog
     screen(options?:Object): BlessedScreen
     program(): BlessedProgram
     escape(string: string): string;
@@ -11,8 +13,25 @@ declare module Blessed {
 
   export interface BlessedElement {
   }
+  export interface BlessedImage extends BlessedElement {
+
+  }
+
   export interface BlessedBox extends BlessedElement {
     content: string
+    style: {
+      bold: boolean,
+      inverse: boolean,
+      fg: string,
+      bg: string,
+      border: {
+        fg: string
+      }
+    }
+  }
+  export interface BlessedLog extends BlessedElement {
+    content: string
+    log(str:string):void;
   }
 
   export interface BlessedScreen {
