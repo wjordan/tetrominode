@@ -1,10 +1,11 @@
-import {List, Set} from "immutable";
+import {List} from "immutable";
 import Random = require("random-js");
 import {Polyomino} from "./Polyomino";
 import {OneSidedPolyomino} from "./OneSidedPolyomino";
+import Set = Immutable.Set;
 
 export interface Randomizer {
-  getNextShape(): [number, Polyomino];
+  getNextShape(pop:boolean): [number, Polyomino];
   getShapes(): Set<Polyomino>;
 }
 
@@ -24,18 +25,20 @@ abstract class RandRandomizer implements Randomizer {
 export class BagRandomizer extends RandRandomizer {
   bag:List<Polyomino>;
   newBag() { return List(Random.shuffle(this.engine, this.shapes.toArray())); }
-  getNextShape():[number, Polyomino] {
+  getNextShape(pop:boolean = false):[number, Polyomino] {
     if (this.bag === undefined || this.bag.isEmpty()) {
       this.bag = this.newBag();
     }
     const polyomino = this.bag.last();
-    this.bag = this.bag.pop();
+    if (pop) {
+      this.bag = this.bag.pop();
+    }
     return [this.shapes.toIndexedSeq().indexOf(polyomino), polyomino];
   }
 }
 
 export class MemorylessRandomizer extends RandRandomizer {
-  getNextShape():[number, Polyomino] {
+  getNextShape(pop:boolean = false):[number, Polyomino] {
     const shape = Random.pick(this.engine, this.shapes.toArray());
     return [this.shapes.toIndexedSeq().indexOf(shape), shape];
   }

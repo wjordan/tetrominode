@@ -1,21 +1,25 @@
 #!/usr/bin/env node
 import * as blessed from "blessed";
+// noinspection ES6UnusedImports,TsLint
+import * as Immutable from "immutable";
 import Map = Immutable.Map;
 import Set = Immutable.Set;
 import BlessedBox = Blessed.BlessedBox;
 import {PointInt} from "./src/PointInt";
 import {Cell} from "./src/Cell";
-import {Playfield, Movement, InputState, Rotation, Drop, Option} from "./src/Playfield";
+import {
+  Playfield, Movement, InputState, Rotation, Drop, Option, GameState, Spawn, Are,
+  LineClear, Falling
+} from "./src/Playfield";
 import BlessedScreen = Blessed.BlessedScreen;
 import BlessedLog = Blessed.BlessedLog;
 import * as tinycolor from "tinycolor2";
+import {Piece} from "./src/Piece";
+import {Polyomino} from "./src/Polyomino";
 
 function getShade(fraction:number):string {
-  return fraction >= 0.99 ? "█" :
-    fraction >= 0.66 ? "▓" :
-    fraction >= 0.33 ? "▒" :
-    fraction > 0 ? "░" :
-    " ";
+  const chars:string = " ░▒▓ ";
+  return chars[Math.round(fraction * 4)];
 }
 
 function fractionString(fraction:number):string {
@@ -24,8 +28,21 @@ function fractionString(fraction:number):string {
 }
 
 export class View {
+  nextPiece:BlessedBox;
+  private nextPieceCanvas:Map<PointInt, BlessedBox>;
   private playfield:Playfield;
   private canvas:Map<PointInt, BlessedBox>;
+  private lockedPiece:Piece = Piece.EMPTY;
+  private static COLORS:[string] = [
+    "brightred",
+    "brightgreen",
+    "brightyellow",
+    "brightblue",
+    "brightmagenta",
+    "brightcyan",
+    "brightwhite",
+  ];
+
   constructor(public screen:BlessedScreen, public logger:BlessedLog) {}
   setPlayfield(playfield:Playfield) {
     this.playfield = playfield;
@@ -33,18 +50,60 @@ export class View {
       const pieceType = cell.block.pieceType;
       const box = blessed.box({
         screen:this.screen,
-//        bold: false,
         width: 2,
         height: 1,
         left: point.x * 2,
         top: point.y,
-        bg: "#000000",
-        fg: "#ffffff",
+        bg: "black",
+        fg: "white",
         content: pieceType === -1 ? "  " : `${pieceType}${pieceType}`,
       });
       this.screen.append(box);
       return box;
     }).toMap();
+    const maxSize:number = this.playfield.bag.getShapes().first().points.size;
+    this.nextPiece = blessed.box({
+      screen:this.screen,
+      width: maxSize * 2,
+      height: maxSize,
+      left: 30,
+      top: 10,
+    });
+    this.screen.append(this.nextPiece);
+    this.nextPieceCanvas = Map<PointInt, BlessedBox>(new PointInt(maxSize, maxSize).range().map(point => {
+      const box = blessed.box({
+        screen:this.screen,
+        width: 2,
+        height: 1,
+        left: point.x * 2,
+        top: point.y,
+        bg: "black",
+        fg: "white",
+        content: "  ",
+      });
+      this.nextPiece.append(box);
+      this.log(`Adding ${point} to nextPieceCanvas`);
+      return [point, box];
+    }));
+    this.log(`NextPieceCanvas[0,0] = ${this.nextPieceCanvas.get(PointInt.ZERO)}`);
+  }
+  lockPiece():void {
+    this.lockedPiece = this.playfield.piece;
+  }
+  drawNextPiece():void {
+    const [pieceType, piece]:[number, Polyomino] = this.playfield.bag.getNextShape(false);
+    const points:Set<PointInt> = piece.points;
+    this.nextPieceCanvas.valueSeq().forEach(box => box.style.bg = "black");
+    points.forEach(point => {
+      const box = this.nextPieceCanvas.get(point);
+      if (box) {
+        // In 256-color mode, distribute piece colors evenly across color spectrum
+        const hue = (360 * pieceType / this.playfield.bag.getShapes().size);
+        box.style.bg = this.screen.tput.numbers.max_colors > 8 ?
+          tinycolor({h: hue, s: 100, v: 100}).toHexString() :
+          View.COLORS[pieceType];
+      }
+    });
   }
   drawCell(position:PointInt):void {
     const movingDown:boolean = !this.playfield.cantMoveDown;
@@ -59,8 +118,7 @@ export class View {
       if (!isBlock &&
         (!movingDown || !pieceAbove)
       ) {
-        box.style.inverse = false;
-        box.style.bg = "#000000";
+        box.style.bg = "black";
         box.content = "  ";
         return;
       }
@@ -68,39 +126,38 @@ export class View {
       if (pieceType === -1) {
         pieceType = this.playfield.grid.get(position.add(new PointInt(0, -1))).block.pieceType;
         if (pieceType === -1) {
-          box.style.inverse = false;
-          box.style.bg = "#000000";
+          box.style.bg = "black";
           box.content = "  ";
           return;
         }
       }
+      // In 256-color mode, distribute piece colors evenly across color spectrum
       const hue = (360 * pieceType / this.playfield.bag.getShapes().size);
-      const lockValue:number = !isActivePiece ? 100 : (1 - (this.playfield.lockCounter / this.playfield.playMode.maxLockDelay)) * 100;
-      const xterm = (<any>blessed).colors.xterm;
-      const pieceColor = xterm[(pieceType % (xterm.length - 1)) + 1];
-      // const pieceColor = tinycolor({h: hue, s: 100, v: 100}).toHexString();
-      // box.style.inverse = false;
-      box.style.bold = true;
+      const lockValue:number = !isActivePiece ? 1 : (1 - (this.playfield.lockCounter / this.playfield.playMode.maxLockDelay));
+
+      const flashPiece = isActivePiece && this.lockedPiece === this.playfield.piece;
+      const pieceColor = flashPiece ? "brightwhite" :
+        this.screen.tput.numbers.max_colors > 8 ?
+          tinycolor({h: hue, s: 100, v: lockValue * 100}).toHexString() :
+          View.COLORS[pieceType];
+
       box.style.fg = pieceColor;
-      box.style.bg = pieceColor;
-      let str:string = getShade(lockValue/100);
+      box.style.bold = flashPiece ? true : undefined;
+      let str:string = flashPiece ? "█" : getShade(lockValue);
+      box.style.bg = str === " " ? pieceColor : "black";
       let shiftDown:number = 0;
       const gravity = this.playfield.gravityCounter;
       if (movingDown) {
         if (isActivePiece) {
           if (!pieceAbove) {
             shiftDown = gravity;
-            box.style.bg = "#000000";
+            box.style.bg = "black";
           }
           if (!pieceBelow) {
             this.drawCell(position.add(new PointInt(0, 1)));
           }
         } else if (pieceAbove) {
-          // Invert fg/bg
-          box.style.bold = false;
-          box.style.fg = "#000000";
-          box.style.bg = pieceColor;
-          box.style.inverse = false;
+          box.style.fg = "black";
           shiftDown = gravity;
         }
       }
@@ -108,21 +165,30 @@ export class View {
         str = fractionString(1 - shiftDown);
       }
       box.content = `${str}${str}`;
-      if (movingDown && !isActivePiece && pieceAbove) {
-        box.style.fg = undefined;
-        box.style.bg = undefined;
-        box.content = `\x1b[0;30m\x1b[${pieceType + 101}m${str}${str}\x1b[0m`;
-      }
     }
   }
 
   log(message:string):void {
-    // this.logger.log(message);
+    this.logger.log(message);
+  }
+
+  setState(s:GameState) {
+    this.lockedPiece.draw();
+    if (s instanceof LineClear) {
+      setTimeout(() => this.lockedPiece = Piece.EMPTY, 1000 / 60 * 5);
+    }
+    if (s instanceof Falling) {
+      this.drawNextPiece();
+    }
   }
 }
 
 // Create a screen object.
-const screen:BlessedScreen = blessed.screen();
+const screen:BlessedScreen = blessed.screen({
+  program: blessed.program({
+    tput: true,
+  }),
+});
 const logger:BlessedLog = blessed.log({
   parent:screen,
   width: 40,

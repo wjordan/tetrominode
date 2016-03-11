@@ -71,7 +71,7 @@ export class Playfield {
   }
 
   public addPiece():void {
-    this.piece = new Piece(this.bag.getNextShape(), this);
+    this.piece = new Piece(this.bag.getNextShape(true), this);
     this.piece.position = this.spawnPos;
     this.putPiece();
   }
@@ -262,7 +262,7 @@ export class Playfield {
    * @return the updated timer counter (so state redirects can be chained)
    */
   setState(s: GameState):number {
-    this.view.log(`Setting state:${s.constructor}`);
+    this.view.setState(s);
     this.state = s;
     this.stateCounter = this.state.enter();
     // this.notifyView(_.updateState)
@@ -321,11 +321,11 @@ export class Playfield {
 
   private lockPiece():void {
     this.lockCounter = 0;
-    
+    this.view.lockPiece();
   }
 }
 
-abstract class GameState {
+export abstract class GameState {
   constructor(public playfield:Playfield) {}
 
   // Executed once per frame.
@@ -349,7 +349,7 @@ class GameOver extends GameState {
   }
 }
 
-class Spawn extends GameState {
+export class Spawn extends GameState {
   enter():number {
     const setNewPiece = this.playfield.setNewPiece(this.playfield.input.rotation);
     this.playfield.view.log(`newPiece:${setNewPiece}`);
@@ -361,7 +361,7 @@ class Spawn extends GameState {
   }
 }
 
-class Falling extends GameState {
+export class Falling extends GameState {
   enter():number {
     this.playfield.rotateVal = this.playfield.input.rotation;
     return -1;
@@ -383,7 +383,7 @@ class Falling extends GameState {
   }
 }
 
-class LineClear extends GameState {
+export class LineClear extends GameState {
   clearedLines:Iterable<number, List<Cell>>;
 
   enter():number {
@@ -410,7 +410,7 @@ class LineClear extends GameState {
 }
 
 // Are is the delay in between piece lock and next piece spawn
-class Are extends GameState {
+export class Are extends GameState {
   enter() {
     return this.playfield.playMode.are;
   }

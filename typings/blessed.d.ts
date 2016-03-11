@@ -7,19 +7,22 @@ declare module Blessed {
     image(options?:Object): BlessedImage
     log(options?:Object): BlessedLog
     screen(options?:Object): BlessedScreen
-    program(): BlessedProgram
+    program(options?:Object): BlessedProgram
     escape(string: string): string;
   }
 
   export interface BlessedElement {
+    append(BlessedElement): void
   }
   export interface BlessedImage extends BlessedElement {
 
   }
 
   export interface BlessedBox extends BlessedElement {
+
     content: string
     style: {
+      blink: boolean,
       bold: boolean,
       inverse: boolean,
       fg: string,
@@ -35,6 +38,7 @@ declare module Blessed {
   }
 
   export interface BlessedScreen {
+    tput: any
     render(): void
     append(BlessedElement): void
     remove(BlessedElement): void
