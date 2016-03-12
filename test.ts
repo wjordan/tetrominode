@@ -8,8 +8,7 @@ import BlessedBox = Blessed.BlessedBox;
 import {PointInt} from "./src/PointInt";
 import {Cell} from "./src/Cell";
 import {
-  Playfield, Movement, InputState, Rotation, Drop, Option, GameState, Spawn, Are,
-  LineClear, Falling
+  Playfield, Movement, InputState, Rotation, Drop, Option, GameState, LineClear, Falling,
 } from "./src/Playfield";
 import BlessedScreen = Blessed.BlessedScreen;
 import BlessedLog = Blessed.BlessedLog;
@@ -18,11 +17,13 @@ import {Piece} from "./src/Piece";
 import {Polyomino} from "./src/Polyomino";
 
 function getShade(fraction:number):string {
+  "use strict";
   const chars:string = " ░▒▓ ";
   return chars[Math.round(fraction * 4)];
 }
 
 function fractionString(fraction:number):string {
+  "use strict";
   const chars:string = " ▁▂▃▄▅▆▇█";
   return chars[Math.round(fraction * 8)];
 }
@@ -43,9 +44,11 @@ export class View {
     "brightwhite",
   ];
 
+  private numShapes:number;
   constructor(public screen:BlessedScreen, public logger:BlessedLog) {}
   setPlayfield(playfield:Playfield) {
     this.playfield = playfield;
+    this.numShapes = playfield.bag.getShapes().size;
     this.canvas = playfield.grid.map((cell:Cell, point:PointInt) => {
       const pieceType = cell.block.pieceType;
       const box = blessed.box({
@@ -61,7 +64,7 @@ export class View {
       this.screen.append(box);
       return box;
     }).toMap();
-    const maxSize:number = this.playfield.bag.getShapes().first().points.size;
+    const maxSize:number = this.numShapes;
     this.nextPiece = blessed.box({
       screen:this.screen,
       width: maxSize * 2,
@@ -79,7 +82,7 @@ export class View {
         top: point.y,
         bg: "black",
         fg: "white",
-        content: "  ",
+        content: `${point.x}${point.y}`,
       });
       this.nextPiece.append(box);
       this.log(`Adding ${point} to nextPieceCanvas`);
@@ -90,21 +93,25 @@ export class View {
   lockPiece():void {
     this.lockedPiece = this.playfield.piece;
   }
+
   drawNextPiece():void {
     const [pieceType, piece]:[number, Polyomino] = this.playfield.bag.getNextShape(false);
+    this.log(`Points:\n${piece.points}`);
+    this.log(`next shape:\n${piece.toString2()}`);
     const points:Set<PointInt> = piece.points;
     this.nextPieceCanvas.valueSeq().forEach(box => box.style.bg = "black");
     points.forEach(point => {
       const box = this.nextPieceCanvas.get(point);
       if (box) {
         // In 256-color mode, distribute piece colors evenly across color spectrum
-        const hue = (360 * pieceType / this.playfield.bag.getShapes().size);
+          const hue = (360 * pieceType / this.numShapes);
         box.style.bg = this.screen.tput.numbers.max_colors > 8 ?
           tinycolor({h: hue, s: 100, v: 100}).toHexString() :
           View.COLORS[pieceType];
       }
     });
   }
+
   drawCell(position:PointInt):void {
     const movingDown:boolean = !this.playfield.cantMoveDown;
     const box:BlessedBox = this.canvas.get(position);
@@ -132,7 +139,7 @@ export class View {
         }
       }
       // In 256-color mode, distribute piece colors evenly across color spectrum
-      const hue = (360 * pieceType / this.playfield.bag.getShapes().size);
+      const hue = (360 * pieceType / this.numShapes);
       const lockValue:number = !isActivePiece ? 1 : (1 - (this.playfield.lockCounter / this.playfield.playMode.maxLockDelay));
 
       const flashPiece = isActivePiece && this.lockedPiece === this.playfield.piece;

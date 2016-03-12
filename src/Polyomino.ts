@@ -27,7 +27,18 @@ export class Polyomino {
         ))));
   }
 
-  toString():string { return `{${this.points.sort().map(p => p.toString()).join(", ")}}`; }
+  toString():string {
+    return `{${this.points.sort().map(p => p.toString()).join(", ")}}`;
+  }
+  // Visual 2d representation of the polyomino.
+  toString2():string {
+    const dimensions = new PointInt(this.points.maxBy(p => p.x).x + 1, this.points.maxBy(p => p.y).y + 1);
+    return dimensions.rangeXY().map(row => row.map(col =>
+        this.points.includes(col) ? "█" : " "
+      ).join("")
+    ).join("\n");
+  }
+
   equals(other:this):boolean { return this.points.equals(other.points); }
   hashCode():number { return this.points.hashCode(); }
 
@@ -50,11 +61,20 @@ export class Polyomino {
   }
 
   rotations():Set<Polyomino> {
-    return Range(0, 4).reduce(
+    return Range(0, 3).reduce(
       r => {
         return r.add(r.last().rotateRight());
       },
       Set.of(new Polyomino(this.points))
+    );
+  }
+
+  rotationsWithDuplicates():List<Polyomino> {
+    return Range(0, 3).reduce(
+        r => {
+          return r.push(r.last().rotateRight());
+        },
+        List.of(new Polyomino(this.points))
     );
   }
 
