@@ -112,7 +112,7 @@ export class Playfield {
    * @return True if the piece was rotated.
    */
   _rotate():boolean {
-    const newPoly:Polyomino = this.piece.shape.rotateRight();
+    const newPoly:Polyomino = this.piece.shape.rotateLeft();
     const newPiecePos:PointInt = this.canRotate(this.piece, newPoly.points.map(point => point.add(this.piece.position)));
     if (newPiecePos !== PointInt.ZERO) {
       this.piece.position = this.piece.position.add(newPiecePos);
@@ -192,7 +192,6 @@ export class Playfield {
   doMovement(movement:Movement):void {
     if (movement === Movement.None) { return; }
     if (this.moveDAS) {
-      this.view.log(`move:${movement}`);
       this.move(<any>movement);
     } // DAS counter expired
   }

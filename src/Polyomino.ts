@@ -2,7 +2,8 @@
 import * as Immutable from "immutable";
 import {PointInt} from "./PointInt";
 import Set = Immutable.Set;
-import {List, Range} from "immutable";
+import List = Immutable.List;
+import {Range} from "immutable";
 
 export class Polyomino {
   constructor(public points:Set<PointInt>) {
@@ -34,7 +35,7 @@ export class Polyomino {
   toString2():string {
     const dimensions = new PointInt(this.points.maxBy(p => p.x).x + 1, this.points.maxBy(p => p.y).y + 1);
     return dimensions.rangeXY().map(row => row.map(col =>
-        this.points.includes(col) ? "█" : " "
+        this.points.includes(col) ? "██" : "  "
       ).join("")
     ).join("\n");
   }
@@ -56,14 +57,14 @@ export class Polyomino {
     );
   }
 
-  rotateRight():Polyomino {
+  rotateLeft():Polyomino {
     return this.transform(p => new PointInt(p.y, -p.x));
   }
 
   rotations():Set<Polyomino> {
     return Range(0, 3).reduce(
       r => {
-        return r.add(r.last().rotateRight());
+        return r.add(r.last().rotateLeft());
       },
       Set.of(new Polyomino(this.points))
     );
@@ -72,7 +73,7 @@ export class Polyomino {
   rotationsWithDuplicates():List<Polyomino> {
     return Range(0, 3).reduce(
         r => {
-          return r.push(r.last().rotateRight());
+          return r.push(r.last().rotateLeft());
         },
         List.of(new Polyomino(this.points))
     );

@@ -34,7 +34,6 @@ class TgmLevelAdvance {
   level = 0;
 
   lineClear(numLines: number) {
-    console.log(`lineClear:${numLines}`);
     this.level += numLines;
     if (this.level % this.seg < numLines) {
       this.level -= this.level % this.seg;

@@ -43,12 +43,15 @@ export class Piece {
     this.transition(() => this.position = this.position.add(new PointInt(x, y)));
   }
   rotate():void {
-    this.transition(() => this.shape = this.shape.rotateRight());
+    this.transition(() => this.shape = this.shape.rotateLeft());
   }
   checkRotate():Polyomino {
-    return this.shape.rotateRight();
+    return this.shape.rotateLeft();
   }
   draw():void {
     this.blocks.forEach(block => block.cell.draw());
+  }
+  toString():string {
+    return this.shape.toString2();
   }
 }

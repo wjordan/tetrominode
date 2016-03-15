@@ -64,13 +64,14 @@ export class View {
       this.screen.append(box);
       return box;
     }).toMap();
-    const maxSize:number = this.numShapes;
+
+    const maxSize:number = <number>(playfield.bag.getShapes().flatMap(poly => poly.points.flatMap(p => p.toArray())).max()) + 1;
     this.nextPiece = blessed.box({
       screen:this.screen,
       width: maxSize * 2,
       height: maxSize,
-      left: 30,
-      top: 10,
+      left: 6,
+      top: 0,
     });
     this.screen.append(this.nextPiece);
     this.nextPieceCanvas = Map<PointInt, BlessedBox>(new PointInt(maxSize, maxSize).range().map(point => {
@@ -82,10 +83,9 @@ export class View {
         top: point.y,
         bg: "black",
         fg: "white",
-        content: `${point.x}${point.y}`,
+        content: "  ",
       });
       this.nextPiece.append(box);
-      this.log(`Adding ${point} to nextPieceCanvas`);
       return [point, box];
     }));
     this.log(`NextPieceCanvas[0,0] = ${this.nextPieceCanvas.get(PointInt.ZERO)}`);
@@ -96,15 +96,13 @@ export class View {
 
   drawNextPiece():void {
     const [pieceType, piece]:[number, Polyomino] = this.playfield.bag.getNextShape(false);
-    this.log(`Points:\n${piece.points}`);
-    this.log(`next shape:\n${piece.toString2()}`);
     const points:Set<PointInt> = piece.points;
     this.nextPieceCanvas.valueSeq().forEach(box => box.style.bg = "black");
     points.forEach(point => {
       const box = this.nextPieceCanvas.get(point);
       if (box) {
         // In 256-color mode, distribute piece colors evenly across color spectrum
-          const hue = (360 * pieceType / this.numShapes);
+        const hue = (360 * pieceType / this.numShapes);
         box.style.bg = this.screen.tput.numbers.max_colors > 8 ?
           tinycolor({h: hue, s: 100, v: 100}).toHexString() :
           View.COLORS[pieceType];

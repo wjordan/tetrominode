@@ -20,50 +20,9 @@ abstract class RandRandomizer implements Randomizer {
   }
 
   getShapes():Set<Polyomino> {
-
-    const startRot = {
-      tgm: {
-        S: 1
-      }
-    };
-    // After start rotations have applied.
-    const rotOffset = {
-      tgm: {
-        T: [
-          [0, 1], [0, 0], [0, 1], [1, 0]
-        ],
-        J: [
-          [0, 1], [0, 0], [0, 1], [1, 0]
-        ],
-        O: [
-          [1, 1]
-        ],
-        S: [
-          [0, 1], [0, 0]
-        ],
-        L: [
-          [0, 1], [0, 0], [0, 1], [1, 0]
-        ],
-        Z: [
-          [0, 1], [1, 0]
-        ],
-        I: [
-          [0, 1], [2, 0]
-        ]
-      }
-    };
-    const shapes = OneSidedPolyomino.get(4);
-    return shapes.toIndexedSeq().map((shape, index) => {
-      const tetrominoOrder = "TJOSLZI";
-      const id = tetrominoOrder[index];
-      const start:number = startRot.tgm[id] || 0;
-      const [rotOffsetX, rotOffsetY] = rotOffset.tgm[id][start];
-      const rot = new PointInt(rotOffsetX, rotOffsetY);
-      console.log(`new polypiece ${id}, rotOffset=${rot}, start=${start}`);
-      const rotatedShape = shape.rotations().toList().get(start);
-      console.log(`shape:\n${rotatedShape.toString2()}`);
-      return new PolyPiece(rotatedShape, rot);
-    }).toSet();
+    console.log(`GetShapes!`);
+    return OneSidedPolyomino.get(4)
+      .map(shape => new PolyPiece(shape, 0)).toSet();
   }
   abstract getNextShape();
 }
