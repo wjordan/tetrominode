@@ -13,7 +13,7 @@
     "test": "mocha"
   },
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0",
   "devDependencies": {
     "blessed": "^0.1.81",
     "browserify": "^11.2.0",
