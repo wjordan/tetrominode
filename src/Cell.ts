@@ -1,14 +1,15 @@
+import {PointInt} from "polyomino";
 import {Block} from "./Block";
-import {PointInt} from "./PointInt";
 import {Playfield} from "./Playfield";
 
 export class Cell {
+  public static ZERO: PointInt = new PointInt(0, 0);
   static INVALID: Cell = new Cell();
-  private _block:Block = Block.EMPTY;
-  get block():Block {
+  private _block: Block = Block.EMPTY;
+  get block(): Block {
     return this._block;
   }
-  set block(b:Block) {
+  set block(b: Block) {
     this._block = b;
     this.draw();
   }
@@ -18,9 +19,9 @@ export class Cell {
     this.block = Block.EMPTY;
     this.getNeighbor(new PointInt(0, 1)).draw();
   }
-  constructor(public position:PointInt = PointInt.ZERO, public playfield?:Playfield) {}
+  constructor(public position: PointInt = Cell.ZERO, public playfield?: Playfield) {}
 
-  getNeighbor(offset:PointInt = new PointInt(0, -1)):Cell {
+  getNeighbor(offset: PointInt = new PointInt(0, -1)): Cell {
     return this.playfield.grid.get(this.position.add(offset), Cell.INVALID);
   }
 
@@ -34,14 +35,14 @@ export class Cell {
     return oldBlock;
   }
 
-  shiftUp(b:Block):void {
+  shiftUp(b: Block): void {
     const oldBlock = this.block;
     this.remove();
     this.block = b;
     this.getNeighbor().shiftUp(oldBlock);
   }
 
-  draw():void {
+  draw(): void {
     if (this.playfield) {
       this.playfield.view.drawCell(this.position);
     }

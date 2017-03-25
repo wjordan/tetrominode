@@ -1,12 +1,9 @@
-import {PointInt} from "./PointInt";
-import {Polyomino} from "./Polyomino";
 import {Block} from "./Block";
-import {Playfield} from "./Playfield";
+import {Cell} from "./Cell";
 import {emptyPolyomino} from "./EmptyPolyomino";
-// noinspection ES6UnusedImports,TsLint
-import * as Immutable from "immutable";
-import List = Immutable.List;
-import Iterable = Immutable.Iterable;
+import {Playfield} from "./Playfield";
+import {Iterable, List} from "immutable";
+import {PointInt, Polyomino} from "polyomino";
 
 /**
  * A single polyomino piece in a fixed position/rotation.
@@ -15,7 +12,7 @@ import Iterable = Immutable.Iterable;
 export class Piece {
   static EMPTY:Piece = new Piece();
 
-  position: PointInt = PointInt.ZERO;
+  position: PointInt = Cell.ZERO;
   blocks: List<Block>;
   shape:Polyomino;
 
@@ -52,6 +49,6 @@ export class Piece {
     this.blocks.forEach(block => block.cell.draw());
   }
   toString():string {
-    return this.shape.toString2();
+    return this.shape.render();
   }
 }

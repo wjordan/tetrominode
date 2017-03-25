@@ -6,45 +6,9 @@
         "removeComments": true,
         "preserveConstEnums": true,
         "sourceMap": false,
-        "target": "ES5"
+        "target": "ES6"
     },
-    "filesGlob": [
-        "./**/*.ts",
-        "!./node_modules/**/!(immutable.d).ts"
-    ],
-    "files": [
-        "./typings/tsd.d.ts",
-        "./node_modules/immutable/dist/immutable.d.ts",
-        "./typings/assertion-error/assertion-error.d.ts",
-        "./typings/blessed.d.ts",
-        "./typings/chai/chai.d.ts",
-        "./typings/drawille.d.ts",
-        "./typings/gl-matrix/gl-matrix.d.ts",
-        "./typings/lodash/lodash.d.ts",
-        "./typings/mocha/mocha.d.ts",
-        "./typings/node/node.d.ts",
-        "./typings/random-js/random-js.d.ts",
-        "./typings/tinycolor/tinycolor.d.ts",
-        "./references.ts",
-        "./src/Block.ts",
-        "./src/Cell.ts",
-        "./src/EmptyPolyomino.ts",
-        "./src/FreePolyomino.ts",
-        "./src/OneSidedPolyomino.ts",
-        "./src/Piece.ts",
-        "./src/Playfield.ts",
-        "./src/PlayMode.ts",
-        "./src/Point.ts",
-        "./src/PointInt.ts",
-        "./src/Polyomino.ts",
-        "./src/PolyPiece.ts",
-        "./src/Randomizer.ts",
-        "./test.ts",
-        "./test/PointTest.ts",
-        "./test/PolyominoTest.ts",
-        "./test/RandomizerTest.ts"
-    ],
-    "atom": {
-        "rewriteTsconfig": true
-    }
+    "include": [
+        "src/**/*"
+    ]
 }

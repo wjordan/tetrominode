@@ -1,9 +1,8 @@
 import {Set} from "immutable";
-import {Polyomino} from "./Polyomino";
-import {PointInt} from "./PointInt";
+import {PointInt, Polyomino} from "polyomino";
 
 class EmptyPolyomino extends Polyomino {
   constructor() { super(Set<PointInt>()); }
-  symmetries():Set<Polyomino> { return Set.of(this); }
+  public symmetries(): Set<Polyomino> { return Set.of(this); }
 }
 export const emptyPolyomino = new EmptyPolyomino();

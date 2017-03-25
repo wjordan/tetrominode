@@ -1,7 +1,7 @@
 import {BagRandomizer} from "../src/Randomizer";
 import { expect } from "chai";
 import {Set, Range} from "immutable";
-import {OneSidedPolyomino} from "../src/OneSidedPolyomino";
+import {OneSidedPolyomino} from "polyomino";
 
 describe("BagRandomizer", () => {
   const polyominoes = OneSidedPolyomino.get(4);

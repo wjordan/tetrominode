@@ -1,18 +1,13 @@
-import {PointInt} from "./PointInt";
-import {Randomizer, BagRandomizer} from "./Randomizer";
-import {Block} from "./Block";
 import BlessedBox = Blessed.BlessedBox;
-import {Polyomino} from "./Polyomino";
+
+import {Iterable, List, Map, Seq, Set} from "immutable";
+import {PointInt, Polyomino} from "polyomino";
+import {View} from "../test";
+import {Block} from "./Block";
 import {Cell} from "./Cell";
 import {Piece} from "./Piece";
-// noinspection ES6UnusedImports,TsLint
-import * as Immutable from "immutable";
-import Set = Immutable.Set;
-import Map = Immutable.Map;
-import Iterable = Immutable.Iterable;
-import List = Immutable.List;
-import {PlayMode, EasyMode} from "./PlayMode";
-import {View} from "../test";
+import {EasyMode, PlayMode} from "./PlayMode";
+import {BagRandomizer, Randomizer} from "./Randomizer";
 
 export const enum Drop { Hard, Soft, None }
 export const enum Rotation { Left, Right, None }
@@ -20,85 +15,90 @@ export const enum Option { End, AddLine, None, Empty }
 
 // Hack to allow typescript enums to contain value objects
 export enum Movement {
-  Left = <any>new PointInt(-1, 0),
-  Right = <any>new PointInt(1, 0),
-  None = <any>PointInt.ZERO
+  Left = new (PointInt as any)(-1, 0),
+  Right = new (PointInt as any)(1, 0),
+  None = Cell.ZERO as any,
 }
 
 /**
  * A two-dimensional grid where the action takes place.
  */
 export class Playfield {
-  get lockCounter():number {
+  get lockCounter(): number {
     return this._lockCounter;
   }
 
-  set lockCounter(value:number) {
+  set lockCounter(value: number) {
     this._lockCounter = value;
     this.piece.draw();
   }
 
-  state:GameState = new Spawn(this);
-  playMode:PlayMode = new EasyMode();
-  input:InputState = InputState.EMPTY;
-  stateCounter:number = 0;
-  frameCounter:number = 0;
-  gravityCounter:number = 0;
-  lineAdd:number = 0;
-  rotateVal: Rotation = Rotation.None;
+  public state: GameState = new Spawn(this);
+  public playMode: PlayMode = new EasyMode();
+  public input: InputState = InputState.EMPTY;
+  public stateCounter: number = 0;
+  public frameCounter: number = 0;
+  public gravityCounter: number = 0;
+  public lineAdd: number = 0;
+  public rotateVal: Rotation = Rotation.None;
 
-  dasCounter: [Movement, number] = [Movement.None, 0];
+  public dasCounter: [Movement, number] = [Movement.None, 0];
 
-  spawnPos:PointInt = new PointInt(3, 3);
-  playfieldSize:PointInt = new PointInt(10, 24);
-  bag:Randomizer = new BagRandomizer(0);
-  canvas:Map<PointInt, BlessedBox>;
+  public spawnPos: PointInt = new PointInt(3, 3);
+  public playfieldSize: PointInt = new PointInt(10, 24);
+  public bag: Randomizer = new BagRandomizer(0);
+  public canvas: Map<PointInt, BlessedBox>;
 
   // Currently active Piece on the playfield.
-  piece:Piece;
+  public piece: Piece;
   // Map of Cell spaces potentially occupied by Blocks.
-  grid:Map<PointInt, Cell>;
-  private _lockCounter:number = 0;
+  public grid: Map<PointInt, Cell>;
+  private _lockCounter: number = 0;
 
-  constructor(public view:View) {
-    this.grid = Map<PointInt, Cell>(this.playfieldSize.range().map(point => [point, new Cell(point, this)]));
+  constructor(public view: View) {
+    this.grid = Map<PointInt, Cell>(
+      this.playfieldSize.
+      range().
+      flatten(true).
+      map((point) => [point, new Cell(point, this)]),
+    );
     view.setPlayfield(this);
     this.stateCounter = this.state.enter();
   }
 
-  public get blocks():Map<PointInt, Block> {
+  public get blocks(): Map<PointInt, Block> {
     return this.grid.map((cell, position) => cell.block).toMap();
   }
 
-  public addPiece():void {
+  public addPiece(): void {
     this.piece = new Piece(this.bag.getNextShape(true), this);
     this.piece.position = this.spawnPos;
     this.putPiece();
   }
 
-  removePiece():void {
-    this.piece.blocks.map(block => block.cell).forEach(cell => cell.remove());
+  public removePiece(): void {
+    this.piece.blocks.map((block) => block.cell).forEach((cell) => cell.remove());
   }
 
 /** Inserts a Piece / Block into the playfield at its current position.
  *  @return false if the Piece was unable to be placed.
  */
-  putPiece():boolean {
+  public putPiece(): boolean {
     this.removePiece();
     this.piece.updateBlocks();
     if (this.empty(this.piece, this.piece.points())) {
-      this.piece.blocks.forEach(block => block.cell.block = block);
+      this.piece.blocks.forEach((block) => block.cell.block = block);
       return true;
     } else {
       return false;
     }
   }
 
-  empty(piece:Piece, points:Iterable<number|PointInt, PointInt>):boolean {
-    return points.every(point => piece.points().contains(point) || this.grid.get(point, Cell.INVALID).isEmpty);
+  public empty(piece: Piece, points: Iterable<number|PointInt, PointInt>): boolean {
+    return points.every((point) => piece.points().contains(point) || this.grid.get(point, Cell.INVALID).isEmpty);
   }
 
-  rotate(rotateVal:Rotation = Rotation.Right):void {
+  public rotate(rotateVal: Rotation = Rotation.Right): void {
     if (rotateVal === Rotation.Right) {
       this._rotate();
     } else if (rotateVal === Rotation.Left) {
@@ -111,10 +111,10 @@ export class Playfield {
   /**Rotates the current Piece.
    * @return True if the piece was rotated.
    */
-  _rotate():boolean {
-    const newPoly:Polyomino = this.piece.shape.rotateLeft();
-    const newPiecePos:PointInt = this.canRotate(this.piece, newPoly.points.map(point => point.add(this.piece.position)));
-    if (newPiecePos !== PointInt.ZERO) {
+  _rotate(): boolean {
+    const newPoly: Polyomino = this.piece.shape.rotateLeft();
+    const newPiecePos: PointInt = this.canRotate(this.piece, newPoly.points.map((point) => point.add(this.piece.position)));
+    if (newPiecePos !== Cell.ZERO) {
       this.piece.position = this.piece.position.add(newPiecePos);
       this.piece.shape = newPoly;
       this.putPiece();
@@ -130,7 +130,7 @@ export class Playfield {
         point =>
           this.empty(piece, points.map(p => p.add(point))),
         undefined,
-        PointInt.ZERO
+        Cell.ZERO
       );
   }
 
@@ -143,7 +143,7 @@ export class Playfield {
    */
   _move(offset:PointInt):boolean {
     const newPos:PointInt = this.movePos(offset);
-    if (newPos.equals(PointInt.ZERO)) {
+    if (newPos.equals(Cell.ZERO)) {
       return false;
     } else {
       this.piece.position = this.piece.position.add(newPos);
@@ -157,9 +157,12 @@ export class Playfield {
    * @return the last valid Pos of the Piece before it can't move any further.
    */
   movePos(offset:PointInt):PointInt {
-    const incr:PointInt = offset.applyBoth(z => Math.max(-1, Math.min(1, z)));
+    const incr:PointInt = new PointInt(
+      Math.max(-1, Math.min(1, offset.x)),
+      Math.max(-1, Math.min(1, offset.y)),
+    );
     return this._movePos(
-      PointInt.ZERO,
+      Cell.ZERO,
       offset,
       incr
     );
@@ -168,7 +171,7 @@ export class Playfield {
   /**Recursive function to move the active Piece by increments until it can't be placed.
    */
   _movePos(currentOffset: PointInt, targetOffset: PointInt, incr: PointInt): PointInt {
-    const zero:boolean = targetOffset.equals(PointInt.ZERO);
+    const zero:boolean = targetOffset.equals(Cell.ZERO);
     if (!zero && this.empty(this.piece, this.piece.points().map(point => point.add(currentOffset).add(incr)))) {
       return this._movePos(currentOffset.add(incr), targetOffset.subtract(incr), incr);
     } else {
@@ -201,7 +204,7 @@ export class Playfield {
   }
 
   public get cantMoveDown() : boolean {
-    return (this.movePos(new PointInt(0, 1)) === PointInt.ZERO);
+    return (this.movePos(new PointInt(0, 1)) === Cell.ZERO);
   }
 
   public get pieceLocked(): boolean {
@@ -400,7 +403,7 @@ export class LineClear extends GameState {
   }
 
   exit():GameState {
-    const keySeq:Immutable.Seq.Indexed<number> = this.clearedLines.keySeq();
+    const keySeq:Seq.Indexed<number> = this.clearedLines.keySeq();
     this.playfield.view.log(`ClearedLines!=${keySeq.toArray()}`);
     this.clearedLines.forEach(row => row.forEach(cell => cell.shiftDown()));
     return new Are(this.playfield);

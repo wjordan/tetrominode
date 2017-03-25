@@ -1,6 +1,4 @@
-import {Polyomino} from "./Polyomino";
-import {PointInt} from "./PointInt";
-import {OneSidedPolyomino} from "./OneSidedPolyomino";
+import {OneSidedPolyomino, PointInt, Polyomino} from "polyomino";
 
 export class PolyPiece extends Polyomino {
   static ORDER:string = "TJOZLSI";

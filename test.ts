@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-import * as blessed from "blessed";
+import * as Blessed from "blessed";
 // noinspection ES6UnusedImports,TsLint
 import * as Immutable from "immutable";
 import Map = Immutable.Map;
 import Set = Immutable.Set;
 import BlessedBox = Blessed.BlessedBox;
-import {PointInt} from "./src/PointInt";
+import {PointInt} from "polyomino";
 import {Cell} from "./src/Cell";
 import {
   Playfield, Movement, InputState, Rotation, Drop, Option, GameState, LineClear, Falling,
@@ -14,7 +14,7 @@ import BlessedScreen = Blessed.BlessedScreen;
 import BlessedLog = Blessed.BlessedLog;
 import * as tinycolor from "tinycolor2";
 import {Piece} from "./src/Piece";
-import {Polyomino} from "./src/Polyomino";
+import {Polyomino} from "polyomino";
 
 function getShade(fraction:number):string {
   "use strict";
@@ -29,12 +29,7 @@ function fractionString(fraction:number):string {
 }
 
 export class View {
-  nextPiece:BlessedBox;
-  private nextPieceCanvas:Map<PointInt, BlessedBox>;
-  private playfield:Playfield;
-  private canvas:Map<PointInt, BlessedBox>;
-  private lockedPiece:Piece = Piece.EMPTY;
-  private static COLORS:[string] = [
+  private static COLORS: [string] = [
     "brightred",
     "brightgreen",
     "brightyellow",
@@ -44,39 +39,48 @@ export class View {
     "brightwhite",
   ];
 
-  private numShapes:number;
-  constructor(public screen:BlessedScreen, public logger:BlessedLog) {}
-  setPlayfield(playfield:Playfield) {
+  public nextPiece: BlessedBox;
+  private nextPieceCanvas: Map<PointInt, BlessedBox>;
+  private playfield: Playfield;
+  private canvas: Map<PointInt, BlessedBox>;
+  private lockedPiece: Piece = Piece.EMPTY;
+
+  private numShapes: number;
+  constructor(public screen: BlessedScreen, public logger: BlessedLog) {}
+  public setPlayfield(playfield: Playfield) {
     this.playfield = playfield;
     this.numShapes = playfield.bag.getShapes().size;
-    this.canvas = playfield.grid.map((cell:Cell, point:PointInt) => {
+    this.canvas = playfield.grid.map((cell: Cell, point: PointInt) => {
       const pieceType = cell.block.pieceType;
-      const box = blessed.box({
-        screen:this.screen,
-        width: 2,
+      const box = Blessed.box({
+        bg: "black",
+        content: pieceType === -1 ? "  " : `${pieceType}${pieceType}`,
+        fg: "white",
         height: 1,
         left: point.x * 2,
+        screen: this.screen,
         top: point.y,
-        bg: "black",
-        fg: "white",
-        content: pieceType === -1 ? "  " : `${pieceType}${pieceType}`,
+        width: 2,
       });
       this.screen.append(box);
       return box;
     }).toMap();
 
-    const maxSize:number = <number>(playfield.bag.getShapes().flatMap(poly => poly.points.flatMap(p => p.toArray())).max()) + 1;
-    this.nextPiece = blessed.box({
-      screen:this.screen,
-      width: maxSize * 2,
+    const shapes: Set<Polyomino> = playfield.bag.getShapes();
+    const map = shapes.map((polyo: Polyomino) => polyo.points.map((p: PointInt) => Math.max(p.x, p.y))).flatten(true);
+    const max = map.max();
+    const maxSize: number = (max as number) + 1;
+    this.nextPiece = Blessed.box({
       height: maxSize,
       left: 6,
+      screen: this.screen,
       top: 0,
+      width: maxSize * 2,
     });
     this.screen.append(this.nextPiece);
-    this.nextPieceCanvas = Map<PointInt, BlessedBox>(new PointInt(maxSize, maxSize).range().map(point => {
-      const box = blessed.box({
-        screen:this.screen,
+    this.nextPieceCanvas = Map<PointInt, BlessedBox>(new PointInt(maxSize, maxSize).range().flatten(true).map((point: PointInt) => {
+      const box = Blessed.box({
+        screen: this.screen,
         width: 2,
         height: 1,
         left: point.x * 2,
@@ -88,17 +92,19 @@ export class View {
       this.nextPiece.append(box);
       return [point, box];
     }));
-    this.log(`NextPieceCanvas[0,0] = ${this.nextPieceCanvas.get(PointInt.ZERO)}`);
+    this.log(`NextPieceCanvas[0,0] = ${this.nextPieceCanvas.get(Cell.ZERO)}`);
   }
-  lockPiece():void {
+  public lockPiece(): void {
     this.lockedPiece = this.playfield.piece;
   }
 
-  drawNextPiece():void {
-    const [pieceType, piece]:[number, Polyomino] = this.playfield.bag.getNextShape(false);
-    const points:Set<PointInt> = piece.points;
-    this.nextPieceCanvas.valueSeq().forEach(box => box.style.bg = "black");
-    points.forEach(point => {
+  public drawNextPiece(): void {
+    const pieceArray: [number, Polyomino] = this.playfield.bag.getNextShape(false);
+    const pieceType = pieceArray[0];
+    const piece = pieceArray[1];
+    const points: Set<PointInt> = piece.points;
+    this.nextPieceCanvas.valueSeq().forEach((box) => box.style.bg = "black");
+    points.forEach((point) => {
       const box = this.nextPieceCanvas.get(point);
       if (box) {
         // In 256-color mode, distribute piece colors evenly across color spectrum
@@ -110,13 +116,13 @@ export class View {
     });
   }
 
-  drawCell(position:PointInt):void {
-    const movingDown:boolean = !this.playfield.cantMoveDown;
-    const box:BlessedBox = this.canvas.get(position);
+  public drawCell(position: PointInt): void {
+    const movingDown: boolean = !this.playfield.cantMoveDown;
+    const box: BlessedBox = this.canvas.get(position);
     if (box) {
       const points = this.playfield.piece.points();
-      const pieceAbove:boolean = points.contains(position.add(new PointInt(0, -1)));
-      const pieceBelow:boolean = points.contains(position.add(new PointInt(0, 1)));
+      const pieceAbove: boolean = points.contains(position.add(new PointInt(0, -1)));
+      const pieceBelow: boolean = points.contains(position.add(new PointInt(0, 1)));
       let pieceType = this.playfield.grid.get(position).block.pieceType;
       const isBlock = pieceType !== -1;
       const isActivePiece = points.contains(position);
@@ -138,7 +144,9 @@ export class View {
       }
       // In 256-color mode, distribute piece colors evenly across color spectrum
       const hue = (360 * pieceType / this.numShapes);
-      const lockValue:number = !isActivePiece ? 1 : (1 - (this.playfield.lockCounter / this.playfield.playMode.maxLockDelay));
+      const lockValue: number = !isActivePiece ?
+        1 :
+        (1 - (this.playfield.lockCounter / this.playfield.playMode.maxLockDelay));
 
       const flashPiece = isActivePiece && this.lockedPiece === this.playfield.piece;
       const pieceColor = flashPiece ? "brightwhite" :
@@ -148,9 +156,9 @@ export class View {
 
       box.style.fg = pieceColor;
       box.style.bold = flashPiece ? true : undefined;
-      let str:string = flashPiece ? "█" : getShade(lockValue);
+      let str: string = flashPiece ? "█" : getShade(lockValue);
       box.style.bg = str === " " ? pieceColor : "black";
-      let shiftDown:number = 0;
+      let shiftDown: number = 0;
       const gravity = this.playfield.gravityCounter;
       if (movingDown) {
         if (isActivePiece) {
@@ -173,11 +181,11 @@ export class View {
     }
   }
 
-  log(message:string):void {
+  public log(message: string): void {
     this.logger.log(message);
   }
 
-  setState(s:GameState) {
+  public setState(s: GameState) {
     this.lockedPiece.draw();
     if (s instanceof LineClear) {
       setTimeout(() => this.lockedPiece = Piece.EMPTY, 1000 / 60 * 5);
@@ -189,25 +197,25 @@ export class View {
 }
 
 // Create a screen object.
-const screen:BlessedScreen = blessed.screen({
-  program: blessed.program({
+const screen: BlessedScreen = Blessed.screen({
+  program: Blessed.program({
     tput: true,
   }),
 });
-const logger:BlessedLog = blessed.log({
-  parent:screen,
-  width: 40,
+const logger: BlessedLog = Blessed.log({
   height: 30,
   left: 30,
-  top: 0,
+  parent: screen,
   scrollback: 30,
+  top: 0,
+  width: 40,
 });
 
-const view:View = new View(screen, logger);
+const view: View = new View(screen, logger);
 
-const playfield:Playfield = new Playfield(view);
+const playfield: Playfield = new Playfield(view);
 
-const input:InputState = new InputState(Movement.None, Drop.None, Rotation.None, Option.None);
+const input: InputState = new InputState(Movement.None, Drop.None, Rotation.None, Option.None);
 
 screen.render();
 screen.key(["q"], () => {
@@ -249,5 +257,5 @@ setInterval(
     screen.render();
     input.clear();
   },
-  1000 / 60
+  1000 / 60,
 );
