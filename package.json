@@ -3,13 +3,9 @@
   "version": "0.0.1",
   "description": "tetrominode",
   "repository": "wjordan/tetrominode",
-  "main": "index.ts",
+  "main": "test.ts",
   "scripts": {
-    "tsconfig": "tsconfig && tsc",
-    "ascii": "npm run tsconfig; ./ascii.js",
-    "prestart": "npm run tsconfig",
-    "start": "node ./test.js",
-    "pretest": "npm run tsconfig",
+    "start": "ts-node ./test",
     "test": "mocha",
     "lint": "tslint --project ./tsconfig.json --type-check && tslint 'test/**/*.ts'"
   },
@@ -19,28 +15,21 @@
     "blessed": "^0.1.81",
     "browserify": "^14.1.0",
     "chai": "^3.5.0",
-    "gl-matrix": "^2.3.1",
-    "intern": "^3.0.6",
-    "lodash": "^4.17.4",
     "mocha": "^3.2.0",
-    "tsconfig": "^5.0.3",
-    "tsconfig-glob": "^0.4.1",
-    "tsify": "^3.0.1",
     "tslint": "^4.5.1",
     "typescript": "^2.2.1"
   },
   "dependencies": {
     "@types/chai": "^3.4.35",
-    "@types/lodash": "^4.14.54",
     "@types/mocha": "^2.2.39",
     "@types/node": "^7.0.5",
     "@types/random-js": "^1.0.28",
     "@types/tinycolor2": "^1.1.0",
     "immutable": "*",
     "keypress": "^0.2.1",
-    "polyomino": "^0.0.1-3",
+    "polyomino": "file:../polyomino",
     "random-js": "^1.0.8",
     "tinycolor2": "^1.3.0",
-    "ts-node": "^2.1.0"
+    "ts-node": "^3.0.2"
   }
 }
