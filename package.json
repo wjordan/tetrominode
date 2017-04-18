@@ -27,7 +27,7 @@
     "@types/tinycolor2": "^1.1.0",
     "immutable": "*",
     "keypress": "^0.2.1",
-    "polyomino": "file:../polyomino",
+    "polyomino": "0.0.1-3",
     "random-js": "^1.0.8",
     "tinycolor2": "^1.3.0",
     "ts-node": "^3.0.2"
