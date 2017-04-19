@@ -5,10 +5,11 @@
         "noImplicitAny": false,
         "removeComments": true,
         "preserveConstEnums": true,
-        "sourceMap": false,
+        "sourceMap": true,
         "target": "ES6"
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "test.ts"
     ]
 }
